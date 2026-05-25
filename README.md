@@ -19,10 +19,12 @@ Built on the [VALD API Documentation](https://support.vald.com/hc/en-au/articles
 
 ## Installation
 
-### From PyPI (Coming Soon)
+### From PyPI (Recommended)
 ```bash
 pip install valdpy
 ```
+
+Available on [PyPI](https://pypi.org/project/valdpy/).
 
 ### From Source
 ```bash

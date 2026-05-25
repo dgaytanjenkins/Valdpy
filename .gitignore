@@ -66,6 +66,8 @@ venv.bak/
 # Jupyter Notebook
 .ipynb_checkpoints
 *.ipynb
+# But DO track example notebooks
+!examples/*.ipynb
 
 # Credentials (IMPORTANT!)
 vald_api_cred.txt

@@ -75,6 +75,8 @@ vald_api_cred_*.txt
 .env
 .env.local
 .env.*.local
+# But DO track credentials template
+!examples/vald_api_cred_TEMPLATE.txt
 
 # CSV and data files
 *.csv

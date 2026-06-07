@@ -1,4 +1,4 @@
-# VALDPY - Python SDK for VALD Performance APIs
+# VALDpy - Python Tools for VALD Performance APIs
 
 A comprehensive Python wrapper for **VALD Performance** APIs, providing easy access to data from ForceDecks, Dynamo, ForceFrame, NordBord, and SmartSpeed testing platforms.
 

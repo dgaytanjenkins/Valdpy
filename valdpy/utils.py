@@ -65,7 +65,7 @@ def format_date_to_iso8601(date: datetime) -> str:
     return date.strftime("%Y-%m-%dT%H:%M:%S.%fZ")[:23] + "Z"
 
 
-def post_call(
+def token_post_call(
     url: str,
     data: Optional[Dict[str, Any]] = None,
     headers: Optional[Dict[str, str]] = None
@@ -101,10 +101,55 @@ def post_call(
         print(f"Failed to obtain token. Status Code: {response.status_code}, Response: {response.text}")
         return ''
 
+def post_call(
+        url: str,
+        data: Optional[Dict[str, Any]] = None,
+        headers: Optional[Dict[str, str]] = None,
+        parameters: Optional[Dict[str, str]] = None
+) -> requests.Response:
+    """
+    Make a POST request to the API.
+    
+    Parameters
+    ----------
+    url : str
+        The API endpoint URL
+    data : dict, optional
+        POST data payload
+    headers : dict, optional
+        HTTP headers (default: application/json)
+        
+    Returns
+    -------
+    requests.Response
+        Response object if status code is 200, empty string otherwise
+    """
+    if parameters is not None:
+        for key, val in parameters.items():
+            url = url + key + val
+
+    if headers is None:
+        headers = {"Content-Type": "application/json"}
+    # print(f"Making POST request to {url} with headers {headers} and data {data}...")
+    if data is not None:
+        try:
+            response = requests.post(url, headers=headers, json=data)
+            # response.raise_for_status()  # Raise exception for bad status codes
+            # return response
+        except requests.exceptions.RequestException as e:
+            print(f"❌ Request failed: {e}")
+    else:
+        try:
+            response = requests.post(url, headers=headers)
+            response.raise_for_status()  # Raise exception for bad status codes
+            return response
+        except requests.exceptions.RequestException as e:
+            print(f"❌ Request failed: {e}")
+            return None
 
 def get_call(
     url: str,
-    header: Dict[str, str],
+    headers: Dict[str, str],
     parameters: Optional[Dict[str, str]] = None
 ) -> requests.Response:
     """
@@ -114,7 +159,7 @@ def get_call(
     ----------
     url : str
         The API endpoint URL
-    header : dict
+    headers : dict
         HTTP headers (typically with Bearer token)
     parameters : dict, optional
         Query parameters to append to URL
@@ -128,7 +173,7 @@ def get_call(
         for key, val in parameters.items():
             url = url + key + val
     
-    response = requests.get(url, headers=header)
+    response = requests.get(url, headers=headers)
     
     if response.status_code == 200:
         return response
@@ -138,7 +183,7 @@ def get_call(
 
 def put_call(
     url: str,
-    header: Dict[str, str],
+    headers: Dict[str, str],
     data: Dict[str, Any],
     parameters: Optional[Dict[str, str]] = None
 ) -> None:
@@ -149,7 +194,7 @@ def put_call(
     ----------
     url : str
         The API endpoint URL
-    header : dict
+    headers : dict
         HTTP headers (typically with Bearer token)
     data : dict
         JSON payload for the PUT request
@@ -160,7 +205,54 @@ def put_call(
         for key, val in parameters.items():
             url = url + key + val
     
-    response = requests.put(url, headers=header, json=data)
+    response = requests.put(url, headers=headers, json=data)
     
     if response.status_code != 204:
         print(f"Failed to retrieve tenants. Status Code: {response.status_code}")
+
+def delete_call(
+    url: str,
+        data: Optional[Dict[str, Any]] = None,
+        headers: Optional[Dict[str, str]] = None,
+        parameters: Optional[Dict[str, str]] = None
+) -> requests.Response:
+    """
+    Make a DELETE request to the API.
+    
+    Parameters
+    ----------
+    url : str
+        The API endpoint URL
+    data : dict, optional
+        DELETE data payload
+    headers : dict, optional
+        HTTP headers (default: application/json)
+        
+    Returns
+    -------
+    requests.Response
+        Response object if status code is 200, empty string otherwise
+    """
+    if parameters is not None:
+        for key, val in parameters.items():
+            url = url + key + val
+
+    if headers is None:
+        headers = {"Content-Type": "application/json"}
+    
+    if data is not None:
+        try:
+            response = requests.delete(url, headers=headers, json=data)
+            response.raise_for_status()  # Raise exception for bad status codes
+            return response
+        except requests.exceptions.RequestException as e:
+            print(f"❌ Request failed: {e}")
+            return None
+    else:
+        try:
+            response = requests.delete(url, headers=headers)
+            response.raise_for_status()  # Raise exception for bad status codes
+            return response
+        except requests.exceptions.RequestException as e:
+            print(f"❌ Request failed: {e}")
+            return None

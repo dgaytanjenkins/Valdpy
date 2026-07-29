@@ -172,7 +172,7 @@ def get_call(
     if parameters is not None:
         for key, val in parameters.items():
             url = url + key + val
-    print(f"Making GET request to {url} with headers {headers}...")
+    # print(f"Making GET request to {url} with headers {headers}...")
     response = requests.get(url, headers=headers)
     
     if response.status_code == 200:

@@ -110,7 +110,6 @@ class ForeDecksAPI:
         }
         if profile_id:
             parameters['&ProfileId='] = profile_id
-        
         response = get_call(self.url, self.header, parameters=parameters)
         
         if response == '' or isinstance(response, int):
@@ -128,9 +127,8 @@ class ForeDecksAPI:
             while response.status_code != 204:
                 parameters['&ModifiedFromUtc='] = self.tests_df['modifiedDateUtc'].tolist()[-1].replace(':', '%3A')
                 response = get_call(self.url, self.header, parameters=parameters)
-                
-                if response == 400 or isinstance(response, int):
-                    print('Get request failed.')
+                if response.status_code == 400:
+                    print('Secondary request failed.')
                     break
                 elif response.status_code == 204:
                     print('Request Completed.')
@@ -243,7 +241,7 @@ class ForeDecksAPI:
         cleaned_text = '\n'.join(decoded_text.splitlines()[2:])
         
         self.raw_df = pd.read_csv(StringIO(cleaned_text))
-        self.raw_df['test_id'] = test_id
+        # self.raw_df['test_id'] = test_id
         
         return self.raw_df
     

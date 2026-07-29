@@ -413,8 +413,15 @@ class ValdAuth:
         
         if response == '':
             raise Exception("Failed to retrieve profiles")
-        self.profile_df = pd.DataFrame(response.json()['profiles'])
-        return self.profile_df
+        try:
+            response_json = response.json()
+        except ValueError:
+            raise Exception("Failed to parse response JSON")
+        try:
+            self.profile_df = pd.DataFrame(response_json['profiles'])
+            return self.profile_df
+        except KeyError:
+            return response_json
     
     def create_profile(self, givenName: str, familyName: str, dateOfBirth: str, sex: Literal["Male", "Female", "Unknown", "NotApplicable"], email: Optional[str] = None, externalId: Optional[str] = None, syncId: Optional[str] = None, returnProfileId: Optional[bool] = True) -> Dict:
         """
@@ -530,22 +537,22 @@ class ValdAuth:
         if not isinstance(categoryNames, list):
             categoryNames = [categoryNames]
         assert len(groupNames) == len(categoryNames), "Length of groupNames and categoryNames must be the same"
-    
-        
-        if self.tenant_id is None:
+     
+        if 'tenant_id' not in dir(self):
             raise ValueError("No tenant ID found. Please call get_tenant_info() first.")
-        
+        print(f"Tenant ID: {self.tenant_id}")
         self.get_tenant_categories() # Ensure categories_df up to date
         self.get_tenant_groups() # Ensure groups_df up to date
+        print(self.groups_df)
         cat_ids = [self.categories_df.loc[self.categories_df['name'] == cat_name, 'id'].values[0] for cat_name in categoryNames]
         group_ids = [
             self.groups_df.loc[
-                (self.groups_df['name'] == groupName) & (self.groups_df['categoryId'] == cat_ids[i]),
+                (self.groups_df['name'] == groupName) & (self.groups_df['categoryId'] == categoryId),
                 'id'
             ].values[0]
-            for i, groupName in enumerate(groupNames)
+            for groupName,categoryId in zip(groupNames, cat_ids)
         ]
-        
+        print(cat_ids,group_ids)
         data = {
             'tenantId': self.tenant_id,
             'profileId': profileId,

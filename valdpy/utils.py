@@ -48,7 +48,7 @@ def read_credentials(filepath: str = 'vald_api_cred.txt') -> Dict[str, str]:
     return creds
 
 
-def format_date_to_iso8601(date: datetime) -> str:
+def format_date_to_iso8601(date: str) -> str:
     """
     Format a datetime object to ISO 8601 format with milliseconds.
     
@@ -172,13 +172,13 @@ def get_call(
     if parameters is not None:
         for key, val in parameters.items():
             url = url + key + val
-    
+    print(f"Making GET request to {url} with headers {headers}...")
     response = requests.get(url, headers=headers)
     
     if response.status_code == 200:
         return response
     else:
-        return response.status_code
+        return response
 
 
 def put_call(

@@ -10,7 +10,7 @@ with open("requirements.txt", "r", encoding="utf-8") as fh:
 
 setup(
     name="valdpy",
-    version="0.1.0",
+    version="0.1.1",
     author="Danny Gaytan-Jenkins",
     author_email="dgaytanj@uoregon.edu",
     description="Python SDK for VALD Performance APIs",

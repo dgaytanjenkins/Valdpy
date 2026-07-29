@@ -1,10 +1,11 @@
 """ForceFrame API client for VALD Performance"""
 
 from typing import Optional, Dict, Any
-
+from datetime import datetime
 import pandas as pd
+import re
 
-from ..utils import get_call
+from ..utils import get_call,format_date_to_iso8601
 
 
 class ForceFrameAPI:
@@ -26,44 +27,71 @@ class ForceFrameAPI:
         self.header = header
         
         if region == 'USA':
-            self.url = 'https://prd-use-api-extforceframe.valdperformance.com'
+            self.url = 'https://prd-use-api-externalforceframe.valdperformance.com'
         elif region == 'Australia':
-            self.url = 'https://prd-aue-api-extforceframe.valdperformance.com'
+            self.url = 'https://prd-aue-api-externalforceframe.valdperformance.com'
         elif region == 'Europe':
             self.url = 'https://prd-euw-api-extforceframe.valdperformance.com'
         else:
             raise ValueError(f"Region '{region}' not supported. Use 'USA', 'Australia', or 'Europe'.")
     
-    def get_tests_info(self, date: str, profile_id: Optional[str] = None) -> pd.DataFrame:
+    def get_tests(self, modifiedDate: str, profileID: Optional[str] = None, pattern = r"^([0-2][0-9]|3[01])/(0[1-9]|1[0-2])/([0-9]{4})$") -> pd.DataFrame:
         """
         Get test information from a specific date.
         
         Parameters
         ----------
-        date : str
-            Test date (ISO 8601 format or 'dd/mm/yyyy')
-        profile_id : str, optional
-            Filter by specific profile ID
+        modifiedDate : str
+            Test modified date (ISO 8601 format or 'dd/mm/yyyy')
+        profileID : str, optional
+            Filter by specific profile ID (use 'None' to ignore)
             
         Returns
         -------
         pd.DataFrame
             Tests information
         """
+        # Parse date
+        if 'tests_df' in dir(self):
+            delattr(self,'tests_df')
+        # Use Modified date only 
+        if isinstance(modifiedDate,datetime):
+            pass
+        elif isinstance(modifiedDate,str) and re.match(pattern, modifiedDate):
+            modifiedDate = datetime.strptime(modifiedDate, "%d/%m/%Y")
+        else:
+            print('Modified date does not match format - dd/mm/yyyy, ie 01/01/1900')
         parameters = {
-            '/tests': '',
+            '/tests/v2': '',
             '?TenantId=': self.tenant_id,
-            '&ModifiedFromUtc=': date,
+            '&ModifiedFromUtc=': format_date_to_iso8601(modifiedDate.replace(hour=5)).replace(':','%3A'),
         }
         
-        if profile_id:
-            parameters['&ProfileId='] = profile_id
+        if profileID != None:
+            parameters['&ProfileId='] = profileID
         
         response = get_call(self.url, self.header, parameters=parameters)
         
-        if response != '' and not isinstance(response, int):
+        if response == 400:
+            if 'tests_df' in dir(self):
+                delattr(self,'tests_df')
+            return 'Get request failed.'
+        elif response == 204:
+            return 'No Content'
+        else:
             self.tests_df = pd.DataFrame(response.json()['tests'])
-            return self.tests_df
+            while response != 204:
+                parameters['&ModifiedFromUtc='] = self.tests_df['modifiedDateUtc'].tolist()[-1].replace(':','%3A')
+                response = get_call(self.url,self.header,parameters=parameters)
+                if response == 400:
+                    if 'tests_df' in dir(self):
+                        delattr(self,'tests_df')
+                    print('Get request failed.')
+                elif response == 204:
+                    print('No Content.')
+                else:
+                    temp_df = pd.DataFrame(response.json()['tests'])
+                    self.tests_df = pd.concat([self.tests_df,temp_df])
         
         return None
     
@@ -82,16 +110,46 @@ class ForceFrameAPI:
             Test results
         """
         parameters = {
-            '/v2019q3/': '',
-            'teams/': self.tenant_id,
-            '/tests/': test_id,
-            '/trials': '',
+            '/tests': '',
+            '/': test_id,
+            '?TenantId=': self.tenant_id,
         }
         
         response = get_call(self.url, self.header, parameters=parameters)
         
-        if response != '' and not isinstance(response, int):
-            self.results_df = pd.DataFrame(response.json())
-            return self.results_df
-        
-        return None
+        # if response != '' and not isinstance(response, int):
+        #     self.results_df = pd.DataFrame(response.json())
+        #     return self.results_df
+        if response == '':
+            pass
+        else:
+            self.test = response.json()
+        # return None
+    
+    def get_force_trace(self, test_id):
+        """
+        Get force trace data for a specific test.
+        Parameters
+        ----------
+        test_id : str
+            Test ID
+        Returns
+        -------
+        pd.DataFrame
+            Force trace data
+        """
+        parameters = {
+            '/tests':'',
+            '/':test_id,
+            '/forceframetrace':'',
+            '?TenantId=':self.tenant_id,
+        }
+        response = get_call(self.url,self.header,parameters=parameters)
+        if response == '':
+            pass
+        else:
+            self.raw = response.json()
+            self.raw['forces'] = pd.DataFrame(response.json()['forces'])
+            self.raw['forces']['sample_number'] = np.arange(len(self.raw['forces']))
+            self.raw['forces']['time_s'] = self.raw['forces']['sample_number'] * (1/samplingFreq)
+            return self.raw['forces']

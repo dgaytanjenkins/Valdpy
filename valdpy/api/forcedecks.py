@@ -178,8 +178,8 @@ class ForeDecksAPI:
         
         # Merge with result definitions
         def_df = pd.DataFrame(list(df['definition'].values))
-        def_df.rename(columns={"id": "resultID"}, inplace=True)
-        df = pd.merge(df, def_df, how='left', left_on='resultId', right_on='resultID')
+        def_df.rename(columns={"id": "resultId"}, inplace=True)
+        df = pd.merge(df, def_df, how='left', on='resultId')
         df = df.drop(columns=['definition'])
         
         # Parse additional trials
@@ -200,8 +200,8 @@ class ForeDecksAPI:
                     temp_df['limb'] = entry['limb']
                 
                 def_df = pd.DataFrame(list(temp_df['definition'].values))
-                def_df.rename(columns={"id": "resultID"}, inplace=True)
-                temp_df = pd.merge(temp_df, def_df, how='left', left_on='resultId', right_on='resultID')
+                def_df.rename(columns={"id": "resultId"}, inplace=True)
+                temp_df = pd.merge(temp_df, def_df, how='left', on='resultId')
                 temp_df = temp_df.drop(columns=['definition'])
                 df = pd.concat([df, temp_df])
         

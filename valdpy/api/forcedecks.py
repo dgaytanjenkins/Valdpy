@@ -80,7 +80,7 @@ class ForeDecksAPI:
         Parameters
         ----------
         date : datetime or str
-            Test date (format: 'dd/mm/yyyy' or datetime object)
+            Test date (format: 'dd/mm/yyyy', 'dd/mm/yyyy hh:mm', or datetime object)
         profile_id : str, optional
             Filter by specific profile ID
             
@@ -90,17 +90,21 @@ class ForeDecksAPI:
             Tests dataframe or error message
         """
         # Parse date
-        pattern = r"^([0-2][0-9]|3[01])/(0[1-9]|1[0-2])/([0-9]{4})$"
+        date_pattern = r"^([0-2][0-9]|3[01])/(0[1-9]|1[0-2])/([0-9]{4})$"
+        datetime_pattern = r"^([0-2][0-9]|3[01])/(0[1-9]|1[0-2])/([0-9]{4}) ([0-1][0-9]|2[0-3]):([0-5][0-9])$"
         
         if isinstance(date, datetime):
             date_str = format_date_to_iso8601(date).replace(':', '%3A')
-        elif isinstance(date, str) and re.match(pattern, date):
+        elif isinstance(date, str) and re.match(date_pattern, date):
             date_obj = datetime.strptime(date, "%d/%m/%Y")
+            date_str = format_date_to_iso8601(date_obj).replace(':', '%3A')
+        elif isinstance(date, str) and re.match(datetime_pattern, date):
+            date_obj = datetime.strptime(date, "%d/%m/%Y %H:%M")
             date_str = format_date_to_iso8601(date_obj).replace(':', '%3A')
         elif isinstance(date, str) and re.match(r'^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$', date):
             date_str = date.replace(':', '%3A')
         else:
-            return 'Date does not match format - dd/mm/yyyy'
+            return 'Date does not match format - dd/mm/yyyy or dd/mm/yyyy hh:mm, ie 01/01/1900 or 01/01/1900 09:00'
         
         # Build parameters
         parameters = {

@@ -3,9 +3,18 @@
 import requests
 import pandas as pd
 import json
-from datetime import datetime
+from datetime import datetime, date, timezone
+from zoneinfo import ZoneInfo
 from typing import Dict, Any, Optional
 
+
+ALLOWED_TIMEZONES = {
+    "UTC",
+    "America/New_York",
+    "America/Chicago",
+    "America/Denver",
+    "America/Los_Angeles",
+}
 
 def convert_ticks_to_datetime(ticks: float) -> pd.Timestamp:
     """
@@ -48,21 +57,58 @@ def read_credentials(filepath: str = 'vald_api_cred.txt') -> Dict[str, str]:
     return creds
 
 
-def format_date_to_iso8601(date: str) -> str:
+def format_date_to_iso8601(
+    date_entry: datetime | date | str,
+    input_timezone: str | None = "America/Los_Angeles",
+) -> str:
     """
-    Format a datetime object to ISO 8601 format with milliseconds.
-    
-    Parameters
-    ----------
-    date : datetime
-        DateTime object to format
-        
-    Returns
-    -------
-    str
-        ISO 8601 formatted string (e.g., '2024-01-01T00:00:00.000Z')
+    Format a date/datetime value to ISO 8601 in UTC.
+
+    Accepted string formats:
+    - dd/mm/yyyy
+    - dd/mm/yyyy hh:mm
+    - dd/mm/yyyy hh:mm:ss
+
+    If no time is present, midnight is assumed.
     """
-    return date.strftime("%Y-%m-%dT%H:%M:%S.%fZ")[:23] + "Z"
+    if isinstance(date_entry, str):
+        value = date_entry.strip()
+
+        dt = None
+        for fmt in ("%d/%m/%Y %H:%M:%S", "%d/%m/%Y %H:%M", "%d/%m/%Y"):
+            try:
+                dt = datetime.strptime(value, fmt)
+                break
+            except ValueError:
+                continue
+
+        if dt is None:
+            raise ValueError(
+                "Invalid date format. Use 'dd/mm/yyyy' or 'dd/mm/yyyy hh:mm'."
+            )
+
+    elif isinstance(date_entry, date) and not isinstance(date_entry, datetime):
+        dt = datetime.combine(date_entry, datetime.min.time())
+    elif isinstance(date_entry, datetime):
+        dt = date_entry
+    else:
+        raise TypeError("date_entry must be datetime, date, or str")
+
+
+    if dt.tzinfo is None:
+        if input_timezone is None:
+            raise ValueError("input_timezone is required for naive datetimes")
+
+        if input_timezone not in ALLOWED_TIMEZONES:
+            raise ValueError(
+                f"Invalid timezone '{input_timezone}'. "
+                f"Allowed values: {sorted(ALLOWED_TIMEZONES)}"
+            )
+
+        dt = dt.replace(tzinfo=ZoneInfo(input_timezone))
+
+    utc_date = dt.astimezone(timezone.utc)
+    return utc_date.strftime("%Y-%m-%dT%H:%M:%S.%f")[:23] + "Z"
 
 
 def token_post_call(

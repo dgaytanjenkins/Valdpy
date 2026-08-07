@@ -183,7 +183,8 @@ class ForeDecksAPI:
         # Merge with result definitions
         def_df = pd.DataFrame(list(df['definition'].values))
         def_df.rename(columns={"id": "resultId"}, inplace=True)
-        df = pd.merge(df, def_df, how='left', on='resultId')
+        def_df = def_df.drop_duplicates(subset=["resultId"])  # prevent many-to-many explode
+        df = pd.merge(df, def_df, how='left', on='resultId', validate='many_to_one')
         df = df.drop(columns=['definition'])
         
         # Parse additional trials
@@ -205,11 +206,12 @@ class ForeDecksAPI:
                 
                 def_df = pd.DataFrame(list(temp_df['definition'].values))
                 def_df.rename(columns={"id": "resultId"}, inplace=True)
-                temp_df = pd.merge(temp_df, def_df, how='left', on='resultId')
+                def_df = def_df.drop_duplicates(subset=["resultId"])  # prevent many-to-many explode
+                temp_df = pd.merge(temp_df, def_df, how='left', on='resultId', validate='many_to_one')
                 temp_df = temp_df.drop(columns=['definition'])
-                df = pd.concat([df, temp_df])
+                df = pd.concat([df, temp_df], ignore_index=True)
         
-        self.results_df = df
+        self.results_df = df.drop_duplicates(subset=["testId", "resultId", "limb", "result", "rep"], keep="first")
         return response.json(), def_df
     
     def get_force_trace(self, test_id: str) -> pd.DataFrame:

@@ -59,7 +59,7 @@ def read_credentials(filepath: str = 'vald_api_cred.txt') -> Dict[str, str]:
 
 def format_date_to_iso8601(
     date_entry: datetime | date | str,
-    input_timezone: str | None = "America/Los_Angeles",
+    input_timezone: str | None = "UTC",
 ) -> str:
     """
     Format a date/datetime value to ISO 8601 in UTC.

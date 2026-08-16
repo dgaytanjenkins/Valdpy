@@ -301,7 +301,7 @@ class ValdAuth:
         if response == '':
             raise Exception("Failed to create group")
     
-    def get_group_profiles(self, groupName: str, categoryName: str = 'Team') -> pd.DataFrame:
+    def get_group_profiles(self, groupName: str = None, categoryName: str = 'Team') -> pd.DataFrame:
         """
         Get profiles for a specific group.
         (Scenario 1: Retrieve list of tenant's profiles; Profile URL)

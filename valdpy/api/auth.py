@@ -343,10 +343,20 @@ class ValdAuth:
         
         response = get_call(self.profile_url, headers=self.headers, parameters=parameters)
         
-        if response == '':
-            raise Exception("Failed to retrieve profiles")
+        if response == '' or response.status_code != 200:
+            raise Exception(f"Failed to retrieve profiles. Status Code: {getattr(response, 'status_code', 'unknown')}, Response: {getattr(response, 'text', '')}")
         
-        self.profile_df = pd.DataFrame(response.json()['profiles'])
+        # An empty body (e.g. a group with no profiles) is not valid JSON
+        if not response.text.strip():
+            self.profile_df = pd.DataFrame()
+            return self.profile_df
+        
+        try:
+            response_json = response.json()
+        except ValueError:
+            raise Exception(f"Failed to parse response JSON. Response: {response.text}")
+        
+        self.profile_df = pd.DataFrame(response_json.get('profiles', []))
         return self.profile_df
     
     def get_profiles(self, profileIds: Optional[List[str]] = [], groupName: Optional[str] = None, categoryName: Optional[str] = 'Team', syncId: Optional[str] = None, externalId: Optional[str] = None) -> pd.DataFrame:

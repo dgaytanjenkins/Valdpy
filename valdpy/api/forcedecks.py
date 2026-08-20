@@ -74,7 +74,7 @@ class ForeDecksAPI:
         self,
         date: datetime | str,
         profile_id: Optional[str] = None,
-        input_timezone: str | None = Settings.DEFAULT_TIMEZONE
+        timezone: str | None = Settings.DEFAULT_TIMEZONE
         
     ) -> pd.DataFrame | str:
         """
@@ -97,13 +97,13 @@ class ForeDecksAPI:
         datetime_pattern = r"^([0-2][0-9]|3[01])/(0[1-9]|1[0-2])/([0-9]{4}) ([0-1][0-9]|2[0-3]):([0-5][0-9])$"
         
         if isinstance(date, datetime):
-            date_str = format_date_to_iso8601(date, input_timezone).replace(':', '%3A')
+            date_str = format_date_to_iso8601(date, timezone).replace(':', '%3A')
         elif isinstance(date, str) and re.match(date_pattern, date):
             date_obj = datetime.strptime(date, "%d/%m/%Y")
-            date_str = format_date_to_iso8601(date_obj, input_timezone).replace(':', '%3A')
+            date_str = format_date_to_iso8601(date_obj, timezone).replace(':', '%3A')
         elif isinstance(date, str) and re.match(datetime_pattern, date):
             date_obj = datetime.strptime(date, "%d/%m/%Y %H:%M")
-            date_str = format_date_to_iso8601(date_obj, input_timezone).replace(':', '%3A')
+            date_str = format_date_to_iso8601(date_obj, timezone).replace(':', '%3A')
         elif isinstance(date, str) and re.match(r'^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$', date):
             date_str = date.replace(':', '%3A')
         else:

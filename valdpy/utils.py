@@ -7,14 +7,10 @@ from datetime import datetime, date, timezone
 from zoneinfo import ZoneInfo
 from typing import Dict, Any, Optional
 
+from .configs import Settings
 
-ALLOWED_TIMEZONES = {
-    "UTC",
-    "America/New_York",
-    "America/Chicago",
-    "America/Denver",
-    "America/Los_Angeles",
-}
+
+ALLOWED_TIMEZONES = Settings.ALLOWED_TIMEZONES
 
 def convert_ticks_to_datetime(ticks: float) -> pd.Timestamp:
     """
